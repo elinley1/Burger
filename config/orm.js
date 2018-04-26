@@ -2,12 +2,14 @@ var connection = require("../config/connection.js");
 
 
 //Helper function for building queryies in SQL syntax
-let numArray = Array.apply(null, Array(num))
-    .map(function (_, i) { return i; });
+function makeQueryString(num) {
+    var arr=[];
 
-return Array(num).reduce(function (acc, v) {
-    return acc + "?";
-}, "");
+    for (var i=0; i<num; i++) {
+        arr.push("?");
+    }
+    return arr.toString();
+}
 
 //Helper function to convert objects into SQL syntax
 function objSql(object) {
@@ -37,7 +39,19 @@ var orm = {
             callback(result);
         });
     },
-
+    read: function (table, idColName, idVal) {
+        return new Promise(function(resolve, reject) {
+            connection.query("select * from " + table +" where " + idColName + " = " + idVal,
+            function(err, result) {
+                if(err) {
+                    reject(err);
+                }
+                else {
+                    resolve(result[0])
+                }
+            });
+        });
+    },
     insertOne: function (table, cols, vals, callback) {
         var queryString = "INSERT INTO " + table;
 
@@ -45,7 +59,7 @@ var orm = {
         queryString += cols.toString();
         queryString += ") ";
         queryString += "VALUES (";
-        queryString += numArray(val.length);
+        queryString += makeQueryString(vals.length);
         queryString += ") ";
 
         console.log(queryString);
